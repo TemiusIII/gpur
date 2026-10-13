@@ -8,6 +8,14 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- **`transparent` config option.** Setting `transparent = true` in `config.toml`
+  leaves the page background unpainted so the terminal's own transparency, blur
+  or wallpaper shows through. The block waveform's lower half uses the
+  top-growing partial blocks in this mode, as under `NO_COLOR`, since its
+  complement-color trick needs a painted background.
+
 ## [0.13.4] - 2026-10-09
 
 ### Fixed

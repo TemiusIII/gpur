@@ -16,8 +16,8 @@ pub struct GpurConfig {
     pub history_len: usize,
     /// Graph glyph set: "braille" (default), "block", or "ascii".
     pub graphs: String,
-    /// don't paint the page background: let the terminal's own background
-    /// (transparency, blur, wallpaper) show through
+    /// Leave the page background unpainted, so the terminal's own background
+    /// (transparency, blur, wallpaper) shows through.
     pub transparent: bool,
 }
 

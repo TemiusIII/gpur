@@ -1,9 +1,9 @@
 use crate::app::{App, GraphStyle, SessionStats};
 use crate::backend::GpuSnapshot;
-use crate::theme::{ColorMode, UiTheme};
+use crate::theme::UiTheme;
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Layout, Rect};
-use ratatui::style::Style;
+use ratatui::style::{Color, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{
     Block, BorderType, Cell, Paragraph, Row, Scrollbar, ScrollbarOrientation, ScrollbarState, Table,
@@ -846,11 +846,12 @@ const UNKNOWN_MARK: char = '·';
 ///
 /// The waveform's down half normally sidesteps that gap with the complement
 /// trick, painting the bar in the background and the hole in the foreground.
-/// That needs two colors, so under [`ColorMode::Mono`] it collapses and draws
-/// the cell inverted. This is the fallback for that case: three levels instead
-/// of eight, rounded to the nearest available, which loses resolution but keeps
-/// the bar pointing the way it grows. Ties round down, so a bar is understated
-/// rather than overstated.
+/// That needs a painted page color, so under
+/// [`ColorMode::Mono`](crate::theme::ColorMode::Mono) or a transparent page it
+/// collapses and draws the cell inverted. This is the fallback for that case:
+/// three levels instead of eight, rounded to the nearest available, which loses
+/// resolution but keeps the bar pointing the way it grows. Ties round down, so
+/// a bar is understated rather than overstated.
 fn upper_block(eighths: usize) -> char {
     match eighths {
         0..=2 => '▔',
@@ -1066,19 +1067,17 @@ fn draw_waveform_cells(
                         GraphStyle::Block if half == 0 => {
                             (EIGHTHS[in_cell], Style::new().fg(color))
                         }
-                        GraphStyle::Block
-                            if t.mode == ColorMode::Mono
-                                || t.bg == ratatui::style::Color::Reset =>
-                        {
-                            // The complement trick below needs two distinct
-                            // colors, and Mono has none: `paint` answers
-                            // `Color::Reset` for the bar and for the page
-                            // alike, so the "empty" complement was drawn in the
-                            // default foreground and every cell in this half
-                            // rendered as its own inverse — a measured 0 as a
-                            // nearly full block. Fall back to the upper
-                            // partials Unicode does have, which cost resolution
-                            // but at least point the right way.
+                        GraphStyle::Block if t.bg == Color::Reset => {
+                            // The complement trick below paints the "empty"
+                            // part in the page color, so it needs one. Mono
+                            // has none (`paint` answers `Color::Reset`) and a
+                            // transparent page leaves it to the terminal, so
+                            // the complement was drawn in the default
+                            // foreground and every cell in this half rendered
+                            // as its own inverse — a measured 0 as a nearly
+                            // full block. Fall back to the upper partials
+                            // Unicode does have, which cost resolution but at
+                            // least point the right way.
                             (upper_block(in_cell), Style::new().fg(color))
                         }
                         GraphStyle::Block => {
@@ -1838,10 +1837,27 @@ mod tests {
         assert_eq!(grid[3][0].0, '█'.to_string());
         assert_eq!(grid[4][0].0, '█'.to_string());
 
-        // Colour modes that can afford the complement trick still use it, so
-        // this stayed a Mono-only fallback.
+        // A painted page can afford the complement trick and still uses it, so
+        // this stayed a fallback for pages without one.
         let color = waveform_grid(&color_theme(), GraphStyle::Block, &quiet, &quiet, 1, 6);
         assert_eq!(color[3][0].0, EIGHTHS[7].to_string());
+    }
+
+    /// `transparent = true` keeps a full palette but leaves the page to the
+    /// terminal, so the complement trick loses its second color just as Mono
+    /// does and must take the same fallback.
+    #[test]
+    fn a_transparent_block_graph_does_not_invert_its_bottom_half() {
+        let mut t = color_theme();
+        t.bg = Color::Reset;
+        let quiet = [Some(0u64)];
+        let grid = waveform_grid(&t, GraphStyle::Block, &quiet, &quiet, 1, 6);
+        assert_eq!(
+            grid[3][0].0,
+            '▔'.to_string(),
+            "a measured 0 filled the cell"
+        );
+        assert_eq!(grid[4][0].0, " ", "the bar leaked past its own value");
     }
 
     #[test]
