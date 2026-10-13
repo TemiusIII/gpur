@@ -22,6 +22,22 @@ the last holdout, because a waveform has no glyph for absent — in 0.11.1.
 
 ---
 
+## Transparent background follow-up — 2026-10-14
+
+- `transparent` is config-only: there is no `--transparent` CLI flag, and
+  `main.rs` applies it by overwriting `UiTheme::bg` after `theme::load`. Fine
+  while `main` is the only caller; if a second path ever builds a theme, fold
+  the option into `theme::load` instead of copying the overwrite.
+- Not verified on a real transparent terminal by us; the contributor's PR
+  screenshots are the only visual check. The block waveform fallback is covered
+  by `a_transparent_block_graph_does_not_invert_its_bottom_half`.
+- `cargo doc --no-deps` warns about an unresolved intra-doc link to
+  `GpuProcess::gpu_mem_bytes`. Pre-existing, unrelated to this change, not
+  fixed.
+- `Cargo.lock` is behind the registry: `cargo generate-lockfile` on 2026-10-14
+  re-resolved dozens of crates (and added `cc`). The 0.13.5 bump kept the lock
+  as CI tested it; a dependency refresh should be its own change with a CI run.
+
 ## Windows validation follow-up — 2026-10-08
 
 - `src/theme.rs::rgb_to_16` collapses many pastel theme colors to the same
