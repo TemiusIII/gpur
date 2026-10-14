@@ -21,7 +21,6 @@ pub struct GpurConfig {
     /// Leave the page background unpainted, so the terminal's own background
     /// (transparency, blur, wallpaper) shows through.
     pub transparent: bool,
-    
 }
 
 impl Default for GpurConfig {
