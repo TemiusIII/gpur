@@ -16,9 +16,12 @@ pub struct GpurConfig {
     pub history_len: usize,
     /// Graph glyph set: "braille" (default), "block", or "ascii".
     pub graphs: String,
+    /// Show the process list under the GPU cards. Default true.
+    pub show_processes: bool,
     /// Leave the page background unpainted, so the terminal's own background
     /// (transparency, blur, wallpaper) shows through.
     pub transparent: bool,
+    
 }
 
 impl Default for GpurConfig {
@@ -28,6 +31,7 @@ impl Default for GpurConfig {
             theme: None,
             history_len: 300,
             graphs: "braille".into(),
+            show_processes: true,
             transparent: false,
         }
     }
